@@ -10,6 +10,8 @@ from yahoo_fin.options import *
 import requests
 import lxml.html as lh
 import pandas as pd
+from functools import reduce
+import pickle
 
 # this ssl stuff is needed for pycharm to execute. Was not needed in jupyter
 import ssl
@@ -121,8 +123,8 @@ counter_greater_than_threshold = 0
 counter_less_than_threshold = 0
 counter_N_A = 0
 counter_bad_poll = 0
-for ticker in sp:
-# for ticker in sp[:200]:
+# for ticker in sp:
+for ticker in sp[:200]:
     print(j)
     ticker_str = ticker.replace(".", '-')
     # print(ticker_str)
@@ -189,3 +191,19 @@ print("greater than = ", counter_greater_than_threshold)
 print('less than = ',counter_less_than_threshold)
 print('Number of N/As = ',counter_N_A)
 print('Number of bad polls = ', counter_bad_poll)
+
+price_data = {ticker: get_data(ticker.replace(".", "-"), start_date="06/01/2020") for ticker in sp_greater_than_threshold}
+# print(price_data)
+combined = reduce(lambda x, y: x.append(y), price_data.values())
+print(combined)
+print(combined.to_string())
+
+print("oooooooooooooooooooooooooooooooooooo")
+options_data = {ticker: get_calls(ticker.replace(".", "-")) for ticker in sp_greater_than_threshold}
+# print(price_data)
+combined_options = reduce(lambda x, y: x.append(y), options_data.values())
+print(combined_options)
+print(combined_options.to_string())
+
+with open("sp500tickers_greater_threshold.pickle_all5000", "wb") as f:
+    pickle.dump(combined_options, f)
