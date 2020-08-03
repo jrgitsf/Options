@@ -4,7 +4,9 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 # c= get_calls('cvx', date='2020-8-7')
-c = get_calls('cvx', date='August 7, 2020')
+c = get_calls('cvx', date='July 31, 2020')
+# c = get_calls('cvx', date='August 7, 2020')
+
 e = get_expiration_dates('cvx')
 
 print(list(c.head()))
