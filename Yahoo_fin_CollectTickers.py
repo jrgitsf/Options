@@ -1,8 +1,10 @@
 # http://theautomatic.net/2018/07/31/how-to-get-live-stock-prices-with-python/
 # http://jonathansoma.com/lede/foundations/classes/pandas%20columns%20and%20functions/apply-a-function-to-every-row-in-a-pandas-dataframe/
+
 from yahoo_fin.stock_info import *
 import datetime as dt
 from yahoo_fin.options import *
+import numpy as np
 import requests
 import lxml.html as lh
 import pandas as pd
@@ -26,8 +28,6 @@ print(type(x))
 print(x[0])
 #-------------------------------
 
-
-
 # This is an easier way to get the data, oops.
 print('apple current price is ',get_live_price("aapl"))
 current = get_quote_table("aapl", dict_result = True)
@@ -38,9 +38,9 @@ print(current['Earnings Date'])
 print(current['Quote Price'])
 
 
-# sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE']
+sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE']
 # sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE', 'ADI', 'ADSK', 'AEE', 'AZO', 'BAC', 'BBY', 'BDX', 'BK', 'C', 'CAG', 'CDNS', 'CDW', 'CFG']
-sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE', 'ADSK', 'ALGN', 'APH', 'AZO', 'BAC', 'BBY', 'BIIB', 'BK', 'BLK', 'C', 'CAG', 'CDNS', 'CFG', 'CMA', 'CMG', 'COF', 'COO', 'COST', 'COTY', 'CPB', 'CPRT', 'CRM', 'CSX', 'DAL', 'DE', 'DFS', 'DG', 'DLTR', 'DOV', 'DPZ', 'DRI', 'EFX', 'EL', 'FAST', 'FDX', 'FE', 'FRC', 'GIS', 'GL', 'GS', 'HAL', 'HPE', 'HPQ', 'HRB', 'HRL', 'IBM', 'INFO', 'INTU', 'JBHT', 'JNJ', 'JPM', 'KEY', 'KEYS', 'KMI', 'KMX', 'KO', 'KR', 'KSU', 'LEN', 'LMT', 'LVS', 'MDT', 'MKC', 'MS', 'MSFT', 'MU', 'NDAQ', 'NKE', 'NTAP', 'ORCL', 'PAYX', 'PCAR', 'PEP', 'PLD', 'PM', 'PNC', 'PVH', 'RF', 'ROST', 'RSG', 'RTX', 'SBAC', 'SCHW', 'SJM', 'SLG', 'STT', 'STZ', 'TFC', 'TIF', 'TMO', 'TXN', 'TXT', 'UAL', 'UDR', 'ULTA', 'UNH', 'USB', 'WFC', 'WHR', 'WLTW', 'WM', 'WMB', 'ZION']
+# sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE', 'ADSK', 'ALGN', 'APH', 'AZO', 'BAC', 'BBY', 'BIIB', 'BK', 'BLK', 'C', 'CAG', 'CDNS', 'CFG', 'CMA', 'CMG', 'COF', 'COO', 'COST', 'COTY', 'CPB', 'CPRT', 'CRM', 'CSX', 'DAL', 'DE', 'DFS', 'DG', 'DLTR', 'DOV', 'DPZ', 'DRI', 'EFX', 'EL', 'FAST', 'FDX', 'FE', 'FRC', 'GIS', 'GL', 'GS', 'HAL', 'HPE', 'HPQ', 'HRB', 'HRL', 'IBM', 'INFO', 'INTU', 'JBHT', 'JNJ', 'JPM', 'KEY', 'KEYS', 'KMI', 'KMX', 'KO', 'KR', 'KSU', 'LEN', 'LMT', 'LVS', 'MDT', 'MKC', 'MS', 'MSFT', 'MU', 'NDAQ', 'NKE', 'NTAP', 'ORCL', 'PAYX', 'PCAR', 'PEP', 'PLD', 'PM', 'PNC', 'PVH', 'RF', 'ROST', 'RSG', 'RTX', 'SBAC', 'SCHW', 'SJM', 'SLG', 'STT', 'STZ', 'TFC', 'TIF', 'TMO', 'TXN', 'TXT', 'UAL', 'UDR', 'ULTA', 'UNH', 'USB', 'WFC', 'WHR', 'WLTW', 'WM', 'WMB', 'ZION']
 # price_data = {ticker: get_data(ticker.replace(".", "-"), start_date="06/01/2020") for ticker in sp_greater_than_threshold}
 # print(price_data)
 # combined = reduce(lambda x, y: x.append(y), price_data.values())
@@ -52,6 +52,7 @@ print("oooooooooooooooooooooooooooooooooooo")
 options_data = {ticker: get_calls(ticker) for ticker in sp_greater_than_threshold}
 # print(price_data)
 combined_options = reduce(lambda x, y: x.append(y), options_data.values())
+pd.set_option("display.precision", 2) # this sets the max precisin to two decimal places
 print(type(combined_options))
 # print(combined_options)
 # print(combined_options.to_string())
@@ -71,5 +72,60 @@ print(combined_options.to_string)
 print(get_live_price('ADBE'))
 # print(combined_options['ticker'].str[:4])
 
-with open("sp500tickers_greater_threshold.pickle", "wb") as f:
-    pickle.dump(combined_options, f)
+
+print(combined_options.dtypes)
+print(combined_options[['Live Price','Strike']])
+
+# "Where" is the vectorized way to do this. You need numpy. Pandas does not have a ternary way
+combined_options['100Shares'] = combined_options['Live Price'] * 100
+
+combined_options['1Contract'] = combined_options['Bid'] * 100
+
+combined_options['TheMoney'] = np.where(combined_options['Live Price'] >= combined_options['Strike'],
+                                         "In", "Out")
+
+combined_options['Intrinsic'] = np.where(combined_options['Strike'] <= combined_options['Live Price'],
+                                         combined_options['Live Price']-combined_options['Strike'], 0)
+
+# combined_options['Intrinsic'] = np.where(combined_options['Live Price'] >= combined_options['Strike'],
+#                                          combined_options['Live Price']-combined_options['Strike'], 0)
+
+combined_options['Upside'] = np.where(combined_options['Strike'] >= combined_options['Live Price'],
+                                         combined_options['Strike']-combined_options['Live Price'],0)
+
+# combined_options['Upside'] = np.where(combined_options['Live Price'] >= combined_options['Strike'],
+#                                          0, combined_options['Live Price']-combined_options['Strike'])
+
+combined_options['Downside'] = np.where(combined_options['Strike'] <= combined_options['Live Price'],
+                                         combined_options['Live Price']-combined_options['Strike'], 0 )
+
+combined_options['Breakeven'] = combined_options['Live Price']-combined_options['Bid']
+
+combined_options['BuyDown'] = np.where(combined_options['Live Price'] >= combined_options['Strike'],
+                                         combined_options['Downside'] * 100, 0)
+
+combined_options['OptionsProfit'] = combined_options['1Contract']-combined_options['BuyDown']
+
+combined_options['TotalOptionProfit'] = combined_options['OptionsProfit'] + combined_options['Upside'] * 100
+
+combined_options['ROO'] = np.where(combined_options['Strike'] >= combined_options['Live Price'],
+                                   100*(combined_options['Bid']/combined_options['Live Price']),
+                                   100*((combined_options['Bid']-(combined_options['Live Price']-combined_options['Strike']))/combined_options['Strike']))
+
+
+
+
+# DON'T Do it this way
+# for i in combined_options:
+#     if [combined_options['Live Price'].values >= combined_options['Strike'].values]:
+#         combined_options['Intrinsic'] = combined_options['Live Price'].values.astype(float)-combined_options['Strike'].values.astype(float)
+#         print(combined_options[['Live Price', 'Strike', 'Intrinsic']].to_string)
+#     else:
+#         combined_options['Intrinsic'] = 0
+
+print(combined_options.to_string)
+print(combined_options[['Live Price','Strike','100Shares','1Contract','TheMoney','Intrinsic','Upside','Downside','Breakeven','BuyDown','OptionsProfit','TotalOptionProfit','ROO']].to_string)
+
+
+# with open("sp500tickers_greater_threshold.pickle", "wb") as f:
+#     pickle.dump(combined_options, f)
