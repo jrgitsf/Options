@@ -14,7 +14,6 @@ import pickle
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-
 #--------------------------------
 # the option call function returns the option name but includes the expiration. How to strip??? so,
 #splits a string before the 1st number as a list. [0] prints the 1st item in the list-- the ticker
@@ -68,6 +67,9 @@ print(combined_options.to_string)
 # combined_options['Live Price'] = combined_options['Live Price'].apply(get_live_price(combined_options['ticker']))
 # This is so unintuitive
 combined_options['Live Price']= combined_options['ticker'].apply(get_live_price)
+
+#sometimes yahoo would insert a "-" which then python wouuld interpret the entire series as a string.
+combined_options['Bid'] = combined_options['Bid'].replace('-',0.0).astype(float)
 print(combined_options.to_string)
 print(get_live_price('ADBE'))
 # print(combined_options['ticker'].str[:4])
@@ -79,41 +81,37 @@ print(combined_options[['Live Price','Strike']])
 # "Where" is the vectorized way to do this. You need numpy. Pandas does not have a ternary way
 combined_options['100Shares'] = combined_options['Live Price'] * 100
 
-combined_options['1Contract'] = combined_options['Bid'] * 100
+combined_options['1Contract'] = combined_options['Last Price'] * 100
 
 combined_options['TheMoney'] = np.where(combined_options['Live Price'] >= combined_options['Strike'],
                                          "In", "Out")
 
-combined_options['Intrinsic'] = np.where(combined_options['Strike'] <= combined_options['Live Price'],
+combined_options['Intrinsic'] = np.where(combined_options['Live Price'] >= combined_options['Strike'],
                                          combined_options['Live Price']-combined_options['Strike'], 0)
 
-# combined_options['Intrinsic'] = np.where(combined_options['Live Price'] >= combined_options['Strike'],
-#                                          combined_options['Live Price']-combined_options['Strike'], 0)
-
 combined_options['Upside'] = np.where(combined_options['Strike'] >= combined_options['Live Price'],
-                                         combined_options['Strike']-combined_options['Live Price'],0)
+                                         combined_options['Strike']-combined_options['Live Price'], 0)
 
-# combined_options['Upside'] = np.where(combined_options['Live Price'] >= combined_options['Strike'],
-#                                          0, combined_options['Live Price']-combined_options['Strike'])
-
-combined_options['Downside'] = np.where(combined_options['Strike'] <= combined_options['Live Price'],
-                                         combined_options['Live Price']-combined_options['Strike'], 0 )
-
-combined_options['Breakeven'] = combined_options['Live Price']-combined_options['Bid']
+combined_options['Breakeven'] = combined_options['Live Price'] - combined_options['Last Price'].astype(float)
 
 combined_options['BuyDown'] = np.where(combined_options['Live Price'] >= combined_options['Strike'],
-                                         combined_options['Downside'] * 100, 0)
+                                         combined_options['Intrinsic'] * 100, 0.0)
 
-combined_options['OptionsProfit'] = combined_options['1Contract']-combined_options['BuyDown']
 
-combined_options['TotalOptionProfit'] = combined_options['OptionsProfit'] + combined_options['Upside'] * 100
+combined_options['OptionsProfit'] = combined_options['1Contract'] - combined_options['BuyDown']
+
+combined_options['UpsideProfit'] = combined_options['Upside']*100
+
+combined_options['TotalOptionProfit']=combined_options['OptionsProfit']+combined_options['UpsideProfit']
+
+# Both work. I like the above-- a little more straightforward.
+# combined_options['TotalOptionProfit'] = combined_options['OptionsProfit'] + combined_options['Upside'] * 100
 
 combined_options['ROO'] = np.where(combined_options['Strike'] >= combined_options['Live Price'],
-                                   100*(combined_options['Bid']/combined_options['Live Price']),
-                                   100*((combined_options['Bid']-(combined_options['Live Price']-combined_options['Strike']))/combined_options['Strike']))
+                                   100*(combined_options['Last Price']/combined_options['Live Price']),
+                                   100*((combined_options['Last Price']-(combined_options['Live Price']-combined_options['Strike']))/combined_options['Strike']))
 
-
-
+combined_options
 
 # DON'T Do it this way
 # for i in combined_options:
@@ -124,8 +122,7 @@ combined_options['ROO'] = np.where(combined_options['Strike'] >= combined_option
 #         combined_options['Intrinsic'] = 0
 
 print(combined_options.to_string)
-print(combined_options[['Live Price','Strike','100Shares','1Contract','TheMoney','Intrinsic','Upside','Downside','Breakeven','BuyDown','OptionsProfit','TotalOptionProfit','ROO']].to_string)
-
+print(combined_options[['Live Price','Strike','100Shares','1Contract','TheMoney','Intrinsic','Upside','Breakeven','BuyDown','OptionsProfit','TotalOptionProfit','ROO']].to_string)
 
 # with open("sp500tickers_greater_threshold.pickle", "wb") as f:
 #     pickle.dump(combined_options, f)
