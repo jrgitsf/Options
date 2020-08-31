@@ -2,7 +2,6 @@
 # http://jonathansoma.com/lede/foundations/classes/pandas%20columns%20and%20functions/apply-a-function-to-every-row-in-a-pandas-dataframe/
 
 from yahoo_fin.stock_info import *
-import datetime as dt
 from yahoo_fin.options import *
 import numpy as np
 import requests
@@ -13,6 +12,7 @@ import pickle
 # this ssl stuff is needed for pycharm to execute. Was not needed in jupyter
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
+import datetime
 
 #--------------------------------
 # the option call function returns the option name but includes the expiration. How to strip??? so,
@@ -27,6 +27,9 @@ print(type(x))
 print(x[0])
 #-------------------------------
 
+
+
+
 # This is an easier way to get the data, oops.
 print('apple current price is ',get_live_price("aapl"))
 current = get_quote_table("aapl", dict_result = True)
@@ -37,8 +40,10 @@ print(current['Earnings Date'])
 print(current['Quote Price'])
 
 
-sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE']
-# sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE', 'ADI', 'ADSK', 'AEE', 'AZO', 'BAC', 'BBY', 'BDX', 'BK', 'C', 'CAG', 'CDNS', 'CDW', 'CFG']
+
+
+# sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE']
+sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE', 'ADI', 'ADSK', 'AEE', 'AZO', 'BAC', 'BBY', 'BDX', 'BK', 'C', 'CAG', 'CDNS', 'CDW', 'CFG']
 # sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE', 'ADSK', 'ALGN', 'APH', 'AZO', 'BAC', 'BBY', 'BIIB', 'BK', 'BLK', 'C', 'CAG', 'CDNS', 'CFG', 'CMA', 'CMG', 'COF', 'COO', 'COST', 'COTY', 'CPB', 'CPRT', 'CRM', 'CSX', 'DAL', 'DE', 'DFS', 'DG', 'DLTR', 'DOV', 'DPZ', 'DRI', 'EFX', 'EL', 'FAST', 'FDX', 'FE', 'FRC', 'GIS', 'GL', 'GS', 'HAL', 'HPE', 'HPQ', 'HRB', 'HRL', 'IBM', 'INFO', 'INTU', 'JBHT', 'JNJ', 'JPM', 'KEY', 'KEYS', 'KMI', 'KMX', 'KO', 'KR', 'KSU', 'LEN', 'LMT', 'LVS', 'MDT', 'MKC', 'MS', 'MSFT', 'MU', 'NDAQ', 'NKE', 'NTAP', 'ORCL', 'PAYX', 'PCAR', 'PEP', 'PLD', 'PM', 'PNC', 'PVH', 'RF', 'ROST', 'RSG', 'RTX', 'SBAC', 'SCHW', 'SJM', 'SLG', 'STT', 'STZ', 'TFC', 'TIF', 'TMO', 'TXN', 'TXT', 'UAL', 'UDR', 'ULTA', 'UNH', 'USB', 'WFC', 'WHR', 'WLTW', 'WM', 'WMB', 'ZION']
 # price_data = {ticker: get_data(ticker.replace(".", "-"), start_date="06/01/2020") for ticker in sp_greater_than_threshold}
 # print(price_data)
@@ -47,17 +52,34 @@ sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE']
 # print(combined.to_string())
 # print('price_data is ',type(price_data),'combined is   ', type(combined),'combined.to_string() is   ',type(combined.to_string()), sep='type')
 
+
+
 print("oooooooooooooooooooooooooooooooooooo")
 options_data = {ticker: get_calls(ticker) for ticker in sp_greater_than_threshold}
 # print(price_data)
 combined_options = reduce(lambda x, y: x.append(y), options_data.values())
+combined_options.drop(labels=['Last Trade Date','Open Interest','Implied Volatility'], axis = 1, inplace= True)
+# print('xxxxxxxxxx')
+print(combined_options.to_string)
+
 pd.set_option("display.precision", 2) # this sets the max precisin to two decimal places
 print(type(combined_options))
-# print(combined_options)
-# print(combined_options.to_string())
 
 combined_options['ticker'] = combined_options['Contract Name'] # this works
+# Careful- lower case 'd' is needed for striping the Ticker
 combined_options['ticker'] = combined_options['ticker'].str.split('\d',expand = True)
+
+##################################################################
+# combined_options['Test'] = combined_options['Contract Name']
+# combined_options['Test'] = combined_options['Test'].str.split('\D',expand = False)
+# combined_options['Test'] = combined_options['Test'].to_numpy().tolist()
+# combined_options['Test'] = combined_options['Test'].apply(lambda w: ) # Does not work
+# print(combined_options['Test'][0])
+combined_options['Expiry'] = combined_options["Contract Name"].str.extract("(\d+)") #This works!
+combined_options['Expiry'] = pd.to_datetime(combined_options['Expiry'], format='%y%m%d')
+print(combined_options['Expiry'])
+
+############################################################
 print(combined_options.dtypes)
 # print(combined_options['ticker'])
 print(combined_options.ticker)
@@ -73,7 +95,6 @@ combined_options['Bid'] = combined_options['Bid'].replace('-',0.0).astype(float)
 print(combined_options.to_string)
 print(get_live_price('ADBE'))
 # print(combined_options['ticker'].str[:4])
-
 
 print(combined_options.dtypes)
 print(combined_options[['Live Price','Strike']])
@@ -122,7 +143,9 @@ combined_options
 #         combined_options['Intrinsic'] = 0
 
 print(combined_options.to_string)
-print(combined_options[['Live Price','Strike','100Shares','1Contract','TheMoney','Intrinsic','Upside','Breakeven','BuyDown','OptionsProfit','TotalOptionProfit','ROO']].to_string)
-
+print(combined_options[['Expiry','Live Price','Strike','100Shares','1Contract','TheMoney','Intrinsic','Upside','Breakeven','BuyDown','OptionsProfit','TotalOptionProfit','ROO']].to_string)
+result = combined_options[combined_options['ROO'] > 2]
+print(result.to_string)
+print("The End")
 # with open("sp500tickers_greater_threshold.pickle", "wb") as f:
 #     pickle.dump(combined_options, f)
