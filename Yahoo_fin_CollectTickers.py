@@ -43,8 +43,8 @@ print(current['Quote Price'])
 
 
 # sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE']
-sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE', 'ADI', 'ADSK', 'AEE', 'AZO', 'BAC', 'BBY', 'BDX', 'BK', 'C', 'CAG', 'CDNS', 'CDW', 'CFG']
-# sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE', 'ADSK', 'ALGN', 'APH', 'AZO', 'BAC', 'BBY', 'BIIB', 'BK', 'BLK', 'C', 'CAG', 'CDNS', 'CFG', 'CMA', 'CMG', 'COF', 'COO', 'COST', 'COTY', 'CPB', 'CPRT', 'CRM', 'CSX', 'DAL', 'DE', 'DFS', 'DG', 'DLTR', 'DOV', 'DPZ', 'DRI', 'EFX', 'EL', 'FAST', 'FDX', 'FE', 'FRC', 'GIS', 'GL', 'GS', 'HAL', 'HPE', 'HPQ', 'HRB', 'HRL', 'IBM', 'INFO', 'INTU', 'JBHT', 'JNJ', 'JPM', 'KEY', 'KEYS', 'KMI', 'KMX', 'KO', 'KR', 'KSU', 'LEN', 'LMT', 'LVS', 'MDT', 'MKC', 'MS', 'MSFT', 'MU', 'NDAQ', 'NKE', 'NTAP', 'ORCL', 'PAYX', 'PCAR', 'PEP', 'PLD', 'PM', 'PNC', 'PVH', 'RF', 'ROST', 'RSG', 'RTX', 'SBAC', 'SCHW', 'SJM', 'SLG', 'STT', 'STZ', 'TFC', 'TIF', 'TMO', 'TXN', 'TXT', 'UAL', 'UDR', 'ULTA', 'UNH', 'USB', 'WFC', 'WHR', 'WLTW', 'WM', 'WMB', 'ZION']
+# sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE', 'ADI', 'ADSK', 'AEE', 'AZO', 'BAC', 'BBY', 'BDX', 'BK', 'C', 'CAG', 'CDNS', 'CDW', 'CFG']
+sp_greater_than_threshold = ['ABT', 'ACN', 'ADBE', 'ADSK', 'ALGN', 'APH', 'AZO', 'BAC', 'BBY', 'BIIB', 'BK', 'BLK', 'C', 'CAG', 'CDNS', 'CFG', 'CMA', 'CMG', 'COF', 'COO', 'COST', 'COTY', 'CPB', 'CPRT', 'CRM', 'CSX', 'DAL', 'DE', 'DFS', 'DG', 'DLTR', 'DOV', 'DPZ', 'DRI', 'EFX', 'EL', 'FAST', 'FDX', 'FE', 'FRC', 'GIS', 'GL', 'GS', 'HAL', 'HPE', 'HPQ', 'HRB', 'HRL', 'IBM', 'INFO', 'INTU', 'JBHT', 'JNJ', 'JPM', 'KEY', 'KEYS', 'KMI', 'KMX', 'KO', 'KR', 'KSU', 'LEN', 'LMT', 'LVS', 'MDT', 'MKC', 'MS', 'MSFT', 'MU', 'NDAQ', 'NKE', 'NTAP', 'ORCL', 'PAYX', 'PCAR', 'PEP', 'PLD', 'PM', 'PNC', 'PVH', 'RF', 'ROST', 'RSG', 'RTX', 'SBAC', 'SCHW', 'SJM', 'SLG', 'STT', 'STZ', 'TFC', 'TIF', 'TMO', 'TXN', 'TXT', 'UAL', 'UDR', 'ULTA', 'UNH', 'USB', 'WFC', 'WHR', 'WLTW', 'WM', 'WMB', 'ZION']
 # price_data = {ticker: get_data(ticker.replace(".", "-"), start_date="06/01/2020") for ticker in sp_greater_than_threshold}
 # print(price_data)
 # combined = reduce(lambda x, y: x.append(y), price_data.values())
@@ -71,13 +71,13 @@ combined_options['ticker'] = combined_options['ticker'].str.split('\d',expand = 
 
 ##################################################################
 # combined_options['Test'] = combined_options['Contract Name']
-# combined_options['Test'] = combined_options['Test'].str.split('\D',expand = False)
-# combined_options['Test'] = combined_options['Test'].to_numpy().tolist()
-# combined_options['Test'] = combined_options['Test'].apply(lambda w: ) # Does not work
-# print(combined_options['Test'][0])
+combined_options['Test'] = combined_options['Contract Name'].str.split('\D',expand = False)
+print(combined_options)
+combined_options['Test'] = combined_options['Test'].str[-2]
+
 combined_options['Expiry'] = combined_options["Contract Name"].str.extract("(\d+)") #This works!
 combined_options['Expiry'] = pd.to_datetime(combined_options['Expiry'], format='%y%m%d')
-print(combined_options['Expiry'])
+# print(combined_options['Expiry'])
 
 ############################################################
 print(combined_options.dtypes)
